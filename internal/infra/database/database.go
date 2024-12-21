@@ -31,13 +31,13 @@ func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) Da
 		dsn := getConnectionString(config)
 		cfg, err := pgxpool.ParseConfig(dsn)
 		if err != nil {
-			log.Printf("failed to parse database config : %v", err)
+			log.Fatalf("failed to parse database config : %v", err)
 			return
 		}
 
 		pool, err := pgxpool.NewWithConfig(ctx, cfg)
 		if err != nil {
-			log.Printf("failed to create database pool : %v", err)
+			log.Fatalf("failed to create database pool : %v", err)
 			return
 		}
 
@@ -47,7 +47,7 @@ func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) Da
 		}
 
 		if err := db.Ping(ctx); err != nil {
-			log.Printf("database ping failed. Error: %v", err)
+			log.Printf("database ping failed : %v", err)
 		}
 	})
 
