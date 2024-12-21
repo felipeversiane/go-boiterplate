@@ -47,7 +47,7 @@ services:
     networks:
       - default
     expose:
-      - "${API_PORT}"
+      - "8000"
 
   proxy:
     image: nginx:alpine
