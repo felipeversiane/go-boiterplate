@@ -29,15 +29,15 @@ type DatabaseInterface interface {
 func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) DatabaseInterface {
 	once.Do(func() {
 		dsn := getConnectionString(config)
-		poolConfig, parseErr := pgxpool.ParseConfig(dsn)
-		if parseErr != nil {
-			log.Printf("failed to parse database config. DSN: %s, Error: %v", dsn, parseErr)
+		cfg, err := pgxpool.ParseConfig(dsn)
+		if err != nil {
+			log.Printf("failed to parse database config : %v", err)
 			return
 		}
 
-		pool, poolErr := pgxpool.NewWithConfig(ctx, poolConfig)
-		if poolErr != nil {
-			log.Printf("failed to create database pool. Error: %v", poolErr)
+		pool, err := pgxpool.NewWithConfig(ctx, cfg)
+		if err != nil {
+			log.Printf("failed to create database pool : %v", err)
 			return
 		}
 
@@ -46,8 +46,8 @@ func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) Da
 			config: config,
 		}
 
-		if pingErr := db.Ping(ctx); pingErr != nil {
-			log.Printf("database ping failed. Error: %v", pingErr)
+		if err := db.Ping(ctx); err != nil {
+			log.Printf("database ping failed. Error: %v", err)
 		}
 	})
 
