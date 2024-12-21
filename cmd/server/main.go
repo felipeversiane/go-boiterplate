@@ -1,16 +1,23 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"context"
+
+	"github.com/felipeversiane/go-boiterplate/internal/infra/config"
+	"github.com/felipeversiane/go-boiterplate/internal/infra/database"
+	"github.com/felipeversiane/go-boiterplate/internal/infra/server"
 )
 
 func main() {
-	mux := http.NewServeMux()
+	cfg := config.NewConfig()
 
-	mux.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "pong")
-	})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	http.ListenAndServe(":8000", mux)
+	database := database.NewDatabaseConnection(ctx, cfg.GetDatabaseConfig())
+	defer database.Close()
+
+	server := server.NewServer(cfg.GetServerConfig(), database)
+	server.SetupRouter()
+	server.Start()
 }
