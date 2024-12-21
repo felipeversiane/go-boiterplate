@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:13.18-alpine
+    env_file: .env
+    container_name: pg05
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d postgres -U postgres || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  server:
+    build:
+      context: .
+    env_file: .env
+    container_name: go05
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+    ports:
+      - "8000:8000"
+
+
+volumes:
+  local_postgres_data: {}
+
+networks:
+  default:
+    driver: bridge
