@@ -10,7 +10,7 @@ var (
 	once sync.Once
 )
 
-type Config struct {
+type config struct {
 	Database DatabaseConfig
 	Server   ServerConfig
 }
@@ -34,9 +34,9 @@ type ServerConfig struct {
 }
 
 func NewConfig() ConfigInterface {
-	var cfg *Config
+	var cfg *config
 	once.Do(func() {
-		cfg = &Config{
+		cfg = &config{
 			Database: DatabaseConfig{
 				Host:     getEnv("POSTGRES_HOST"),
 				Port:     getEnv("POSTGRES_PORT"),
@@ -53,11 +53,11 @@ func NewConfig() ConfigInterface {
 	return cfg
 }
 
-func (config *Config) GetDatabaseConfig() DatabaseConfig {
+func (config *config) GetDatabaseConfig() DatabaseConfig {
 	return config.Database
 }
 
-func (config *Config) GetServerConfig() ServerConfig {
+func (config *config) GetServerConfig() ServerConfig {
 	return config.Server
 }
 
