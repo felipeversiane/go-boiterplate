@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"sync"
 )
@@ -38,15 +38,15 @@ func NewConfig() ConfigInterface {
 	once.Do(func() {
 		cfg = &Config{
 			Database: DatabaseConfig{
-				Host:     getEnvOrDie("POSTGRES_HOST"),
-				Port:     getEnvOrDie("POSTGRES_PORT"),
-				User:     getEnvOrDie("POSTGRES_USER"),
-				Password: getEnvOrDie("POSTGRES_PASSWORD"),
-				Name:     getEnvOrDie("POSTGRES_DB"),
-				SslMode:  getEnvOrDie("POSTGRES_SSL"),
+				Host:     getEnv("POSTGRES_HOST"),
+				Port:     getEnv("POSTGRES_PORT"),
+				User:     getEnv("POSTGRES_USER"),
+				Password: getEnv("POSTGRES_PASSWORD"),
+				Name:     getEnv("POSTGRES_DB"),
+				SslMode:  getEnv("POSTGRES_SSL"),
 			},
 			Server: ServerConfig{
-				Port: getEnvOrDie("SERVER_PORT"),
+				Port: getEnv("SERVER_PORT"),
 			},
 		}
 	})
@@ -61,10 +61,10 @@ func (config *Config) GetServerConfig() ServerConfig {
 	return config.Server
 }
 
-func getEnvOrDie(key string) string {
+func getEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		panic(fmt.Errorf("missing environment variable %s", key))
+		log.Fatalf("missing required environment variable: %s", key)
 	}
 	return value
 }
