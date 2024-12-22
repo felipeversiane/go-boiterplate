@@ -5,15 +5,11 @@ import (
 
 	"github.com/felipeversiane/go-boiterplate/internal/infra/config"
 	"github.com/felipeversiane/go-boiterplate/internal/infra/database"
-	"github.com/felipeversiane/go-boiterplate/internal/infra/logger"
 	"github.com/felipeversiane/go-boiterplate/internal/infra/server"
 )
 
 func main() {
 	cfg := config.NewConfig()
-
-	logger := logger.NewLogger(cfg.GetLogConfig())
-	logger.Configure()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

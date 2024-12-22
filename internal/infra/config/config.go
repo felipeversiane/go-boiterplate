@@ -13,13 +13,11 @@ var (
 type config struct {
 	Database DatabaseConfig
 	Server   ServerConfig
-	Log      LogConfig
 }
 
 type ConfigInterface interface {
 	GetDatabaseConfig() DatabaseConfig
 	GetServerConfig() ServerConfig
-	GetLogConfig() LogConfig
 }
 
 type DatabaseConfig struct {
@@ -33,10 +31,6 @@ type DatabaseConfig struct {
 
 type ServerConfig struct {
 	Port string
-}
-
-type LogConfig struct {
-	Level string
 }
 
 func NewConfig() ConfigInterface {
@@ -54,9 +48,6 @@ func NewConfig() ConfigInterface {
 			Server: ServerConfig{
 				Port: getEnv("SERVER_PORT"),
 			},
-			Log: LogConfig{
-				Level: getEnv("LOG_LEVEL"),
-			},
 		}
 	})
 	return cfg
@@ -68,10 +59,6 @@ func (config *config) GetDatabaseConfig() DatabaseConfig {
 
 func (config *config) GetServerConfig() ServerConfig {
 	return config.Server
-}
-
-func (c *config) GetLogConfig() LogConfig {
-	return c.Log
 }
 
 func getEnv(key string) string {
