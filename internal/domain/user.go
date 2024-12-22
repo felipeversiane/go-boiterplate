@@ -8,14 +8,14 @@ import (
 )
 
 type User struct {
-	ID        string 
-	Email     string
-	FirstName string
-	LastName  string
-	Password  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Deleted   bool
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Password  string    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Deleted   bool      `json:"-"`
 }
 
 func NewUser(email, firstName, lastName, password string) User {
