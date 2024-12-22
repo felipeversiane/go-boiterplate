@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/felipeversiane/go-boiterplate/internal/infra/config"
@@ -32,8 +32,8 @@ func NewServer(
 	}
 }
 
-func (server *server) SetupRouter() {
-	server.mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+func (s *server) SetupRouter() {
+	s.mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		response := map[string]string{"status": "healthy"}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -41,14 +41,11 @@ func (server *server) SetupRouter() {
 	})
 }
 
-func (server *server) Start() {
-	port := server.config.Port
-	if port == "" {
-		port = "8000"
-	}
+func (s *server) Start() {
+	port := s.config.Port
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), server.mux)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), s.mux)
 	if err != nil {
-		log.Fatalf("failed to start server: %v", err)
+		slog.Error("Failed to start server", "port", port, "error", err)
 	}
 }

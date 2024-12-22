@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 
 	"github.com/felipeversiane/go-boiterplate/internal/infra/config"
@@ -29,15 +29,15 @@ type DatabaseInterface interface {
 func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) DatabaseInterface {
 	once.Do(func() {
 		dsn := getConnectionString(config)
-		cfg, err := pgxpool.ParseConfig(dsn)
+		poolConfig, err := pgxpool.ParseConfig(dsn)
 		if err != nil {
-			log.Fatalf("failed to parse database config : %v", err)
+			slog.Error("Failed to parse database config", "dsn", dsn, "error", err)
 			return
 		}
 
-		pool, err := pgxpool.NewWithConfig(ctx, cfg)
+		pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 		if err != nil {
-			log.Fatalf("failed to create database pool : %v", err)
+			slog.Error("Failed to create database pool", "error", err)
 			return
 		}
 
@@ -47,7 +47,7 @@ func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) Da
 		}
 
 		if err := db.Ping(ctx); err != nil {
-			log.Printf("database ping failed : %v", err)
+			slog.Error("Database ping failed", "error", err)
 		}
 	})
 
@@ -55,7 +55,11 @@ func NewDatabaseConnection(ctx context.Context, config config.DatabaseConfig) Da
 }
 
 func (database *database) Ping(ctx context.Context) error {
-	return database.db.Ping(ctx)
+	err := database.db.Ping(ctx)
+	if err != nil {
+		slog.Warn("Database ping returned an error", "error", err)
+	}
+	return err
 }
 
 func (database *database) Close() {
