@@ -1,13 +1,13 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/http"
 
+	"github.com/felipeversiane/go-boiterplate/internal/domain/user"
 	"github.com/felipeversiane/go-boiterplate/internal/infra/config"
 	"github.com/felipeversiane/go-boiterplate/internal/infra/database"
+	"github.com/gin-gonic/gin"
 )
 
 type ServerInterface interface {
@@ -16,7 +16,7 @@ type ServerInterface interface {
 }
 
 type server struct {
-	mux      *http.ServeMux
+	router   *gin.Engine
 	config   config.ServerConfig
 	database database.DatabaseInterface
 }
@@ -25,27 +25,31 @@ func NewServer(
 	cfg config.ServerConfig,
 	database database.DatabaseInterface,
 ) ServerInterface {
-	return &server{
-		mux:      http.NewServeMux(),
+	server := &server{
+		router:   gin.New(),
 		config:   cfg,
 		database: database,
 	}
+	return server
 }
 
-func (s *server) SetupRouter() {
-	s.mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		response := map[string]string{"status": "healthy"}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+func (server *server) SetupRouter() {
+	server.router.Use(gin.Recovery())
+	v1 := server.router.Group("/api/v1")
+	{
+		user.UserRouter(v1, server.database)
+	}
+	server.router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "healthy",
+		})
 	})
 }
 
-func (s *server) Start() {
-	port := s.config.Port
-
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), s.mux)
+func (server *server) Start() {
+	port := server.config.Port
+	err := server.router.Run(fmt.Sprintf(":%s", port))
 	if err != nil {
-		slog.Error("Failed to start server", "port", port, "error", err)
+		slog.Error("failed to start server", slog.Any("error", err))
 	}
 }
