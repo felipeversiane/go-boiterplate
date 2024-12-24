@@ -2,11 +2,15 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/felipeversiane/go-boiterplate/internal/domain"
 	"github.com/felipeversiane/go-boiterplate/internal/infra/database"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -16,6 +20,7 @@ type userRepository struct {
 
 type UserRepositoryInterface interface {
 	Create(user domain.User, ctx context.Context) (string, error)
+	BulkCreate(users []domain.User, ctx context.Context) error
 	Retrieve(id string, ctx context.Context) (*domain.User, error)
 	List(ctx context.Context) ([]domain.User, error)
 	Update(id string, user domain.User, ctx context.Context) error
@@ -45,6 +50,45 @@ func (repository *userRepository) Create(domain domain.User, ctx context.Context
 		return "", fmt.Errorf("unable to insert user: %w", err)
 	}
 	return id, nil
+}
+
+func (repository *userRepository) BulkCreate(users []domain.User, ctx context.Context) error {
+	query := `
+		INSERT INTO users (id, email, first_name, last_name, password, created_at, updated_at, deleted)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+
+	batch := &pgx.Batch{}
+	for _, user := range users {
+		batch.Queue(query,
+			user.ID,
+			user.Email,
+			user.FirstName,
+			user.LastName,
+			user.Password,
+			user.CreatedAt,
+			user.UpdatedAt,
+			user.Deleted,
+		)
+	}
+
+	results := repository.db.GetDB().SendBatch(ctx, batch)
+	defer results.Close()
+
+	for _, user := range users {
+		_, err := results.Exec()
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+				slog.Info("user %s already exists", user.Email)
+				continue
+			}
+
+			return fmt.Errorf("unable to insert row: %w", err)
+		}
+	}
+
+	return results.Close()
 }
 
 func (repository *userRepository) Retrieve(id string, ctx context.Context) (*domain.User, error) {
